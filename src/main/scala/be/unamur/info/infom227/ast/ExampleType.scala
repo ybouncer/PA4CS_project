@@ -1,5 +1,7 @@
 package be.unamur.info.infom227.ast
 
+import be.unamur.info.infom227.ast.ExampleTypeVisitor
+
 sealed trait ExampleType {
   def accept[T, E](visitor: ExampleTypeVisitor[T, E], environment: E): T
 }
