@@ -100,7 +100,7 @@ WS: [ \t]+ -> skip ;
 
 // Programs
 
-program: scope;
+program: scope EOF;
 
 scope: declareStatement* statements;
 
@@ -111,9 +111,10 @@ statements: statement*;
 
 statement: assignStatement | printStatement | ifStatement | whileStatement;
 
-declareStatement: type IDENTIFIER SEMICOLON;
+declareStatement: (type IDENTIFIER (LBRACE NUMBER RBRACE)?) SEMICOLON;
 
-assignStatement: IDENTIFIER ASSIGN (expression | LBRACE scope expression RBRACE) SEMICOLON;
+assignStatement: IDENTIFIER (LBRACE expression RBRACE)? ASSIGN (expression | LBRACE scope expression RBRACE) SEMICOLON;
+
 
 printStatement: PRINT expression SEMICOLON;
 
@@ -124,8 +125,7 @@ whileStatement: WHILE LPAR expression RPAR LBRACE statements RBRACE;
 
 // Types
 
-type: INT | BOOL;
-
+type: INT | BOOL | INT LBRACE RBRACE | BOOL LBRACE RBRACE;
 
 // Expressions
 
@@ -145,4 +145,5 @@ product: left=product (MULTIPLY | DIVIDE) right=factor | passthrough=factor;
 
 factor: (ADD | SUBTRACT) atom | atom;
 
-atom: IDENTIFIER | NUMBER | TRUE | FALSE | LPAR expression RPAR;
+atom: IDENTIFIER (LBRACE expression RBRACE)? | NUMBER | TRUE | FALSE | LPAR expression RPAR;
+

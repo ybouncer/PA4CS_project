@@ -5,7 +5,8 @@ import be.unamur.info.infom227.cst.ExampleParser
 import org.antlr.v4.runtime.CharStreams
 import org.scalatest.funsuite.AnyFunSuite
 
-import java.io.{BufferedWriter, StringWriter}
+import java.io.BufferedWriter
+import java.io.StringWriter
 import scala.util.Success
 
 class TestExampleInterpreter extends AnyFunSuite {

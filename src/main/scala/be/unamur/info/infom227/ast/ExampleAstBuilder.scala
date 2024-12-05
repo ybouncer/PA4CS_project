@@ -340,3 +340,4 @@ private class ExampleAstBuilder(private var symbolTable: Option[ExampleSymbolTab
     }
   }
 }
+

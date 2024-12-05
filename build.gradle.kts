@@ -25,6 +25,8 @@ repositories {
 dependencies {
     implementation("org.scala-lang:scala3-library_3:3.5.2")
     antlr("org.antlr:antlr4:4.13.2")
+    implementation ("org.scalatest:scalatest_2.13:3.2.9")
+    implementation ("org.antlr:antlr4-runtime:4.9.2")
 
     testImplementation("org.scalatest:scalatest_3:3.2.19")
     testRuntimeOnly("org.junit.platform:junit-platform-engine:1.10.2")
