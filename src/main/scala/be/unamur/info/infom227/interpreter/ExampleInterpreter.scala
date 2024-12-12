@@ -164,4 +164,20 @@ private class ExampleInterpreter extends
       case ExampleEqualComparisonOperator.Eq => leftValue == rightValue
       case ExampleEqualComparisonOperator.Ne => leftValue != rightValue
   }
+
+  override def visitExampleBooleanArrayAccess(
+                                               exampleBooleanArrayAccess: ExampleBooleanArrayAccess,
+                                               environment: ExampleEnvironment[Int | Boolean]
+                                             ): Try[Int | Boolean] = {
+    // Provide your implementation here
+    Success(0) // Replace with actual implementation
+  }
+
+  override def visitExampleIntegerArrayAccess(
+                                               exampleIntegerArrayAccess: ExampleIntegerArrayAccess,
+                                               environment: ExampleEnvironment[Int | Boolean]
+                                             ): Try[Int | Boolean] = {
+    // Provide your implementation here
+    Success(0) // Replace with actual implementation
+  }
 }

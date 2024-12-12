@@ -111,9 +111,12 @@ statements: statement*;
 
 statement: assignStatement | printStatement | ifStatement | whileStatement;
 
-declareStatement: type IDENTIFIER SEMICOLON;
+// EXTENDED to handle DYNAMIC array declaration e.g int[] tab[2];
+declareStatement: type IDENTIFIER (LBRACE NUMBER RBRACE)? SEMICOLON
+;
 
-assignStatement: IDENTIFIER ASSIGN (expression | LBRACE scope expression RBRACE) SEMICOLON;
+// EXTENDED to handle DYNAMIC array assign e.g tab[1] = 2;
+assignStatement: IDENTIFIER (LBRACE expression RBRACE)? ASSIGN (expression | LBRACE scope expression RBRACE) SEMICOLON;
 
 printStatement: PRINT expression SEMICOLON;
 
@@ -122,10 +125,10 @@ ifStatement: IF LPAR expression RPAR LBRACE if=statements RBRACE ELSE LBRACE els
 whileStatement: WHILE LPAR expression RPAR LBRACE statements RBRACE;
 
 
-// Types
+// Types EXTENDED
 
-type: INT | BOOL;
-
+type: INT | BOOL
+          | INT LBRACE RBRACE | BOOL LBRACE RBRACE; // Array types e.g int[] or bool[]
 
 // Expressions
 
@@ -145,4 +148,5 @@ product: left=product (MULTIPLY | DIVIDE) right=factor | passthrough=factor;
 
 factor: (ADD | SUBTRACT) atom | atom;
 
-atom: IDENTIFIER | NUMBER | TRUE | FALSE | LPAR expression RPAR;
+// EXTENDED to handle array access e.g tab[1] or tab[1] = 2;
+atom: IDENTIFIER (LBRACE expression RBRACE)? | NUMBER | TRUE | FALSE | LPAR expression RPAR;

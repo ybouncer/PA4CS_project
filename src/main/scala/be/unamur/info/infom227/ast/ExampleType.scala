@@ -15,3 +15,17 @@ case object ExampleBool extends ExampleType {
     visitor.visitExampleBool(this, environment)
   }
 }
+
+case class ExampleIntArray(size: Int) extends ExampleType {
+  override def accept[T, E](visitor: ExampleTypeVisitor[T, E], environment: E): T = {
+    visitor.visitExampleIntArray(this, environment)
+  }
+}
+
+case class ExampleBoolArray(size: Int) extends ExampleType {
+  override def accept[T, E](visitor: ExampleTypeVisitor[T, E], environment: E): T = {
+    visitor.visitExampleBoolArray(this, environment)
+  }
+}
+
+

@@ -22,10 +22,14 @@ trait ExampleStatementVisitor[T, D] {
   def visitExampleWhileStatement(node: ExampleWhileStatement, data: D): T
 }
 
-trait ExampleTypeVisitor[T, D] {
-  def visitExampleInt(node: ExampleInt.type, data: D): T
+trait ExampleTypeVisitor[T, E] {
+  def visitExampleInt(exampleInt: ExampleInt.type, environment: E): T
 
-  def visitExampleBool(node: ExampleBool.type, data: D): T
+  def visitExampleBool(exampleBool: ExampleBool.type, environment: E): T
+
+  def visitExampleIntArray(exampleIntArray: ExampleIntArray, environment: E): T
+
+  def visitExampleBoolArray(exampleBoolArray: ExampleBoolArray, environment: E): T
 }
 
 trait ExampleExpressionVisitor[T, D] {
@@ -50,4 +54,9 @@ trait ExampleExpressionVisitor[T, D] {
   def visitExampleIntegerComparisonOperation(node: ExampleIntegerComparisonOperation, data: D): T
 
   def visitExampleIntegerEqualComparisonOperation(node: ExampleIntegerEqualComparisonOperation, data: D): T
+
+  def visitExampleIntegerArrayAccess(exampleIntegerArrayAccess: ExampleIntegerArrayAccess, environment: D): T
+
+  def visitExampleBooleanArrayAccess(exampleBooleanArrayAccess: ExampleBooleanArrayAccess, environment: D): T
+
 }

@@ -77,6 +77,8 @@ private class ExampleAstBuilder(private var symbolTable: Option[ExampleSymbolTab
     }
   }
 
+
+  /*
   override def visitDeclareStatement(ctx: ExampleGrammarParser.DeclareStatementContext): Try[ExampleDeclareStatement] = {
     val name = ctx.IDENTIFIER.getText
     for {
@@ -110,6 +112,58 @@ private class ExampleAstBuilder(private var symbolTable: Option[ExampleSymbolTab
           Failure(CannotBuildAstException(s"Expected type $exampleType but got ${expression.exampleType} in statement : ${ctx.getText}", ctx))
         }
       } yield ExampleAssignStatement(ctx.getStart.getLine, name, scope, expression)
+    )
+  }
+*/
+  override def visitDeclareStatement(ctx: ExampleGrammarParser.DeclareStatementContext): Try[ExampleDeclareStatement] = {
+    val name = ctx.IDENTIFIER.getText
+    val arraySize = if (ctx.NUMBER != null) Some(ctx.NUMBER.getText.toInt) else None
+    val variableType = ctx.`type`.getText match {
+      case "int" => ExampleInt
+      case "bool" => ExampleBool
+      case "int[]" => ExampleIntArray(arraySize.get)
+      case "bool[]" => ExampleBoolArray(arraySize.get)
+    }
+    withScope(_.define(name, variableType))
+      .recover(exception => Failure(CannotBuildAstException(s"Variable $name is already defined", ctx, exception)))
+      .map(_ => ExampleDeclareStatement(ctx.getStart.getLine, name, variableType))
+  }
+
+  override def visitAssignStatement(ctx: ExampleGrammarParser.AssignStatementContext): Try[ExampleAssignStatement] = {
+    val name = ctx.IDENTIFIER.getText
+    val index = if (ctx.expression(0) != null) Some(visitExpression(ctx.expression(0))) else None
+    val value = visitExpression(ctx.expression(1))
+
+    withScope(symbolTable =>
+      symbolTable.get(name) match {
+        case Success(ExampleIntArray(size)) =>
+          index match {
+            case Some(Success(idx: ExampleIntegerConstant)) if idx.value < size =>
+              value.flatMap {
+                case v: ExampleIntegerExpression =>
+                  Success(ExampleAssignStatement(ctx.getStart.getLine, name, ExampleScope(), v))
+                case _ => Failure(CannotBuildAstException(s"Invalid value type for array assignment: ${ctx.getText}", ctx))
+              }
+            case _ => Failure(CannotBuildAstException(s"Invalid array index: ${ctx.getText}", ctx))
+          }
+        case Success(ExampleBoolArray(size)) =>
+          index match {
+            case Some(Success(idx: ExampleIntegerConstant)) if idx.value < size =>
+              value.flatMap {
+                case v: ExampleBooleanExpression =>
+                  Success(ExampleAssignStatement(ctx.getStart.getLine, name, ExampleScope(), v))
+                case _ => Failure(CannotBuildAstException(s"Invalid value type for array assignment: ${ctx.getText}", ctx))
+              }
+            case _ => Failure(CannotBuildAstException(s"Invalid array index: ${ctx.getText}", ctx))
+          }
+        case Success(_) =>
+          value.flatMap {
+            case v: ExampleExpression =>
+              Success(ExampleAssignStatement(ctx.getStart.getLine, name, ExampleScope(), v))
+            case _ => Failure(CannotBuildAstException(s"Invalid value type for assignment: ${ctx.getText}", ctx))
+          }
+        case Failure(exception) => Failure(CannotBuildAstException(s"Invalid assignment: ${ctx.getText}", ctx, exception))
+      }
     )
   }
 
@@ -317,7 +371,7 @@ private class ExampleAstBuilder(private var symbolTable: Option[ExampleSymbolTab
     }
   }
 
-  override def visitAtom(ctx: ExampleGrammarParser.AtomContext): Try[ExampleExpression] = {
+  /*  override def visitAtom(ctx: ExampleGrammarParser.AtomContext): Try[ExampleExpression] = {
     if (ctx.IDENTIFIER != null) {
       val name = ctx.IDENTIFIER.getText
       withScope(symbolTable =>
@@ -339,4 +393,38 @@ private class ExampleAstBuilder(private var symbolTable: Option[ExampleSymbolTab
       Failure(UnsupportedRuleException(s"Unsupported expression : ${ctx.getText}", ctx, null))
     }
   }
+}*/
+
+  // extended semantic to handle arrays and array access in the AST building.
+  override def visitAtom(ctx: ExampleGrammarParser.AtomContext): Try[ExampleExpression] = {
+    if (ctx.IDENTIFIER != null) {
+      val name = ctx.IDENTIFIER.getText
+      val index = if (ctx.expression != null) Some(visitExpression(ctx.expression)) else None
+      withScope(symbolTable =>
+        symbolTable.get(name) match {
+          case Success(ExampleIntArray(size)) =>
+            index match {
+              case Some(Success(idx: ExampleIntegerConstant)) if idx.value < size =>
+                Success(ExampleIntegerArrayAccess(name, idx.value))
+              case _ => Failure(CannotBuildAstException(s"Invalid array index: ${ctx.getText}", ctx))
+            }
+          case Success(ExampleBoolArray(size)) =>
+            index match {
+              case Some(Success(idx: ExampleIntegerConstant)) if idx.value < size =>
+                Success(ExampleBooleanArrayAccess(name, idx.value))
+              case _ => Failure(CannotBuildAstException(s"Invalid array index: ${ctx.getText}", ctx))
+            }
+          case Success(ExampleInt) => Success(ExampleIntegerVariable(name))
+          case Success(ExampleBool) => Success(ExampleBooleanVariable(name))
+          case Failure(exception) => Failure(CannotBuildAstException(s"Undefined variable: $name", ctx, exception))
+        }
+      )
+    } else {
+      super.visitAtom(ctx).flatMap {
+        case expression: ExampleExpression => Success(expression)
+        case _ => Failure(CannotBuildAstException(s"Invalid atom expression: ${ctx.getText}", ctx))
+      }
+    }
+  }
+
 }

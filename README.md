@@ -1,4 +1,4 @@
-# INFOM227 ExampleAnalyser
+java # INFOM227 ExampleAnalyser
 
 The aim of this project is to provide an example of a static code analyser and to remind people of the basics of creating languages.
 
