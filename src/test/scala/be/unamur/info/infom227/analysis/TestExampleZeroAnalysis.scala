@@ -1,3 +1,4 @@
+
 package be.unamur.info.infom227.analysis
 
 import be.unamur.info.infom227.ast.{ExampleAstBuilder, ExampleProgram}
@@ -17,6 +18,7 @@ class TestExampleZeroAnalysis extends AnyFunSuite {
     int x;
     int y;
     int z;
+    int tab[5];
     x = 5;
     y = 2;
     z = x / y;
@@ -220,4 +222,43 @@ class TestExampleZeroAnalysis extends AnyFunSuite {
 
     assert(expected === tryMessages)
   }
+//   testing arrays
+  test("simple array declaration and assignment") {
+  val code =
+    """
+    int array[3];
+    array[0] = 1;
+    array[1] = 2;
+    array[2] = 3;
+    array[3] = 4; // This should trigger an error
+    """
+
+  val charStream = CharStreams.fromString(code)
+
+  val tryAst = for {
+    cst <- ExampleParser.parse(charStream)
+    ast <- ExampleAstBuilder.build(cst)
+  } yield ast
+
+  val (cfg, expected) = tryAst match {
+    case Failure(exception) => fail(exception)
+    case Success(program) => (
+      ExampleCfgBuilder.build(program),
+      Success(
+        Map(
+          pp(program, 2) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("array" -> ExampleZeroAnalysisAbstractValue.Bottom)),
+          pp(program, 3) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("array" -> ExampleZeroAnalysisAbstractValue.U)),
+          pp(program, 4) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("array" -> ExampleZeroAnalysisAbstractValue.U)),
+          pp(program, 5) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("array" -> ExampleZeroAnalysisAbstractValue.U)),
+          pp(program, 6) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("array" -> ExampleZeroAnalysisAbstractValue.U)),
+        )
+      )
+    )
+  }
+
+  val result = ExampleZeroAnalysisWorklist.worklist(cfg)
+
+  assert(expected === result)
+}
+
 }

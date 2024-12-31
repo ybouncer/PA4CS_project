@@ -4,6 +4,13 @@ import be.unamur.info.infom227.cfg.{ExampleCfg, ExampleProgramPoint}
 
 import scala.util.Try
 
+/*This class is used to interpret the results of the analysis
+It takes a list of rules that are applied to each program point
+and returns a list of messages
+The messages are tuples containing the line number of the statement
+It processes the control flow graph (CFG) and generates messages based on the analysis results
+,such as errors and warnings.*/
+
 enum ExampleErrorMessageType:
   case Error, Warning
 

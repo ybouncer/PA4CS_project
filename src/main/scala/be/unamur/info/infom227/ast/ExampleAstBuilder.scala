@@ -160,7 +160,7 @@ private class ExampleAstBuilder(private var symbolTable: Option[ExampleSymbolTab
           value.flatMap {
             case v: ExampleExpression =>
               Success(ExampleAssignStatement(ctx.getStart.getLine, name, ExampleScope(), v))
-            case _ => Failure(CannotBuildAstException(s"Invalid value type for assignment: ${ctx.getText}", ctx))
+            case null => Failure(CannotBuildAstException(s"Invalid value type for assignment: ${ctx.getText}", ctx))
           }
         case Failure(exception) => Failure(CannotBuildAstException(s"Invalid assignment: ${ctx.getText}", ctx, exception))
       }
@@ -397,7 +397,9 @@ private class ExampleAstBuilder(private var symbolTable: Option[ExampleSymbolTab
 
   // extended semantic to handle arrays and array access in the AST building.
   override def visitAtom(ctx: ExampleGrammarParser.AtomContext): Try[ExampleExpression] = {
-    if (ctx.IDENTIFIER != null) {
+    if (ctx == null) {
+      Failure(new NullPointerException("AtomContext is null"))
+    } else if (ctx.IDENTIFIER != null) {
       val name = ctx.IDENTIFIER.getText
       val index = if (ctx.expression != null) Some(visitExpression(ctx.expression)) else None
       withScope(symbolTable =>

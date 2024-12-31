@@ -6,6 +6,13 @@ import be.unamur.info.infom227.cfg.ExampleProgramPoint
 
 import scala.util.{Failure, Success, Try}
 
+/*
+This file defines the ExampleZeroAnalysis class, which implements various analysis
+functions for different types of nodes in the abstract syntax tree (AST).
+It includes methods for handling integer and boolean operations, comparisons, and array accesses.
+The analysis is performed using a lattice-based approach, where abstract values are represented
+as elements of a lattice.
+*/
 
 enum ExampleZeroAnalysisAbstractValue:
   case Bottom, Z, NZ, U
@@ -32,6 +39,7 @@ override def visitExampleDeclareStatement(node: ExampleDeclareStatement, abstrac
 node.exampleType match
 case ExampleInt => Success(abstractEnvironment.set(node.name, ExampleZeroAnalysisAbstractValue.Z))
 case ExampleBool => Success(abstractEnvironment.set(node.name, ExampleZeroAnalysisAbstractValue.NZ))
+case _ => Failure(new MatchError(s"Unhandled example type: ${node.exampleType}"))
 }
 
 override def visitExampleAssignStatement(node: ExampleAssignStatement, abstractEnvironment: ExampleAbstractEnvironment[String, ExampleZeroAnalysisAbstractValue]): Try[ExampleAbstractEnvironment[String, ExampleZeroAnalysisAbstractValue]] = {

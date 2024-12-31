@@ -3,6 +3,8 @@ package be.unamur.info.infom227.ast
 import be.unamur.info.infom227.cst.ExampleParser
 import org.antlr.v4.runtime.CharStreams
 import org.scalatest.funsuite.AnyFunSuite
+import be.unamur.info.infom227.ast.ExampleDeclareArrayStatement
+import be.unamur.info.infom227.ast.ExampleAssignArrayStatement
 
 import scala.util.Success
 
@@ -398,4 +400,54 @@ class TestExampleAstBuilder extends AnyFunSuite {
 
     assert(ast.isFailure)
   }
+  
+  // testing arrays 
+  test("build simple example AST with array declaration and assignment") {
+  val code =
+    """
+    int array[3];
+    array[0] = 1;
+    array[1] = 2;
+    array[2] = 3;
+    """
+
+  val expected = Success(
+    ExampleProgram(
+      ExampleScope(
+        ExampleDeclareArrayStatement(2, "array", ExampleInt, 3),
+        ExampleAssignArrayStatement(3, "array", 0, ExampleIntegerConstant(1)),
+        ExampleAssignArrayStatement(4, "array", 1, ExampleIntegerConstant(2)),
+        ExampleAssignArrayStatement(5, "array", 2, ExampleIntegerConstant(3))
+      )
+    )
+  )
+
+  val charStream = CharStreams.fromString(code)
+
+  val ast = for {
+    cst <- ExampleParser.parse(charStream)
+    ast <- ExampleAstBuilder.build(cst)
+  } yield ast
+
+  assert(expected == ast)
+}
+
+test("fail to build a simple example AST because of an out-of-bounds array access") {
+  val code =
+    """
+    int array[3];
+    array[3] = 4; // This should trigger an error
+    """
+
+  val charStream = CharStreams.fromString(code)
+
+  val ast = for {
+    cst <- ExampleParser.parse(charStream)
+    ast <- ExampleAstBuilder.build(cst)
+  } yield ast
+
+  assert(ast.isFailure)
+}
+
+  
 }

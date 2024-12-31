@@ -4,7 +4,11 @@ import be.unamur.info.infom227.ast.{ExampleBooleanExpression, ExampleDeclareStat
 import be.unamur.info.infom227.cfg.{ExampleCfg, ExampleProgramPoint}
 
 import scala.util.Try
-
+/*
+This file defines the ExampleWorklist class, which manages the worklist algorithm
+for the analysis. It includes methods for processing control flow functions and updating
+conditions based on the analysis state.
+*/
 
 abstract class ExampleWorklist[L](lattice: ExampleLattice[L]) {
   def controlFlowFunctions(p: ExampleProgramPoint, abstractEnvironment: ExampleAbstractEnvironment[String, L]): Try[ExampleAbstractEnvironment[String, L]]

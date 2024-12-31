@@ -27,19 +27,20 @@ dependencies {
     antlr("org.antlr:antlr4:4.13.2")
 
     testImplementation("org.scalatest:scalatest_3:3.2.19")
+    testImplementation("org.scalatest:scalatest_2.13:3.2.10")
     testRuntimeOnly("org.junit.platform:junit-platform-engine:1.10.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.2")
     testRuntimeOnly("org.scalatestplus:junit-5-10_3:3.2.19.0")
 }
 
-/*tasks.test {
+tasks.test {
     useJUnitPlatform {
         includeEngines("scalatest")
         testLogging {
             events("passed", "skipped", "failed")
         }
     }
-}*/
+}
 
 tasks.generateGrammarSource {
     arguments = arguments + listOf("-package", "be.unamur.info.infom227.cst", "-visitor", "-no-listener")
