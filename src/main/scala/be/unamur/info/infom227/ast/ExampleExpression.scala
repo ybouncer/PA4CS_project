@@ -113,18 +113,17 @@ case class ExampleIntegerEqualComparisonOperation(operator: ExampleEqualComparis
     case ExampleEqualComparisonOperator.Eq => ExampleIntegerEqualComparisonOperation(ExampleEqualComparisonOperator.Ne, left, right)
     case ExampleEqualComparisonOperator.Ne => ExampleIntegerEqualComparisonOperation(ExampleEqualComparisonOperator.Eq, left, right)
 }
-case class ExampleIntegerArrayAccess(name: String, index: Int) extends ExampleExpression {
-  override def accept[T, E](visitor: ExampleExpressionVisitor[T, E], environment: E): T = {
-    visitor.visitExampleIntegerArrayAccess(this, environment)
-  }
 
-  override def exampleType: ExampleType = ExampleInt
+case class ExampleArrayAccess(arrayName: String, index: ExampleIntegerExpression) extends ExampleIntegerExpression {
+  override def accept[T, E](visitor: ExampleExpressionVisitor[T, E], environment: E): T = {
+    visitor.visitExampleArrayAccess(this, environment)
+  }
 }
 
-case class ExampleBooleanArrayAccess(name: String, index: Int) extends ExampleExpression {
+case class ExampleArrayAssign(arrayName: String, index: ExampleExpression, value: ExampleExpression) extends ExampleExpression {
   override def accept[T, E](visitor: ExampleExpressionVisitor[T, E], environment: E): T = {
-    visitor.visitExampleBooleanArrayAccess(this, environment)
+    visitor.visitExampleArrayAssign(this, environment)
   }
 
-  override def exampleType: ExampleType = ExampleBool
+  override def exampleType: ExampleType = value.exampleType
 }

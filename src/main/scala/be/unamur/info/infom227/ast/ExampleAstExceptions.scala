@@ -17,8 +17,12 @@ class UnsupportedRuleException(
                                 private val cause: Throwable
                               ) extends CannotBuildAstException(message, context, cause)
 
-class MissingContextException(
-                               private val message: String,
-                               private val line: Integer,
-                               private val cause: Throwable
-                             ) extends CannotBuildAstException(message, line, cause)
+class MissingScopeException(
+                               private val message: String
+                             ) extends CannotBuildAstException(message)
+
+class InvalidArrayAccessException(
+  message: String,
+  context: ParserRuleContext,
+  cause: Throwable = None.orNull
+) extends CannotBuildAstException(message, context, cause)

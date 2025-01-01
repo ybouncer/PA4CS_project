@@ -3,12 +3,71 @@ package be.unamur.info.infom227.ast
 import be.unamur.info.infom227.cst.ExampleParser
 import org.antlr.v4.runtime.CharStreams
 import org.scalatest.funsuite.AnyFunSuite
-import be.unamur.info.infom227.ast.ExampleDeclareArrayStatement
-import be.unamur.info.infom227.ast.ExampleAssignArrayStatement
 
 import scala.util.Success
 
 class TestExampleAstBuilder extends AnyFunSuite {
+
+  test("build simple example AST with declarations only") {
+    val code =
+      """
+      int a;
+      int b;
+      """
+
+    val expected = Success(
+      ExampleProgram(
+        ExampleScope(
+          Map(
+            "a" -> ExampleInt,
+            "b" -> ExampleInt
+          ),
+          ExampleDeclareStatement(2, "a", ExampleInt),
+          ExampleDeclareStatement(3, "b", ExampleInt)
+        )
+      )
+    )
+
+    val charStream = CharStreams.fromString(code)
+
+    val ast = for {
+      cst <- ExampleParser.parse(charStream)
+      ast <- ExampleAstBuilder.build(cst)
+    } yield ast
+
+    assert(expected == ast)
+  }
+
+  test("build simple example AST with two array declarations") {
+    val code =
+      """
+      int array1{2};
+      int array2{5};
+      """
+
+    val expected = Success(
+      ExampleProgram(
+        ExampleScope(
+          Map(
+            "array1" -> ExampleArray(baseType = ExampleInt, size = Some(2)),
+            "array2" -> ExampleArray(baseType = ExampleInt, size = Some(5))
+          ),
+          ExampleDeclareStatement(2, "array1", ExampleArray(baseType = ExampleInt, size = Some(2))),
+          ExampleDeclareStatement(3, "array2", ExampleArray(baseType = ExampleInt, size = Some(5)))
+        )
+      )
+    )
+
+    val charStream = CharStreams.fromString(code)
+
+    val ast = for {
+      cst <- ExampleParser.parse(charStream)
+      ast <- ExampleAstBuilder.build(cst)
+    } yield ast
+
+    assert(expected == ast)
+  }
+
 
   test("build simple example AST") {
     val code =
@@ -22,9 +81,10 @@ class TestExampleAstBuilder extends AnyFunSuite {
     val expected = Success(
       ExampleProgram(
         ExampleScope(
+          Map(("a", ExampleInt), ("b", ExampleInt)),
           ExampleDeclareStatement(2, "a", ExampleInt),
           ExampleDeclareStatement(3, "b", ExampleInt),
-          ExampleAssignStatement(4, "a", ExampleScope(), ExampleIntegerBinaryOperation(
+          ExampleAssignStatement(4, "a", ExampleScope(Map.empty), ExampleIntegerBinaryOperation(
             ExampleIntegerBinaryOperator.Div,
             ExampleIntegerBinaryOperation(
               ExampleIntegerBinaryOperator.Mul,
@@ -33,7 +93,7 @@ class TestExampleAstBuilder extends AnyFunSuite {
             ),
             ExampleIntegerConstant(5)
           )),
-          ExampleAssignStatement(5, "b", ExampleScope(), ExampleIntegerBinaryOperation(
+          ExampleAssignStatement(5, "b", ExampleScope(Map.empty), ExampleIntegerBinaryOperation(
             ExampleIntegerBinaryOperator.Sub,
             ExampleIntegerBinaryOperation(
               ExampleIntegerBinaryOperator.Add,
@@ -73,13 +133,15 @@ class TestExampleAstBuilder extends AnyFunSuite {
     val expected = Success(
       ExampleProgram(
         ExampleScope(
+          Map(("a", ExampleInt)),
           ExampleDeclareStatement(2, "a", ExampleInt),
           ExampleAssignStatement(
             3,
             "a",
             ExampleScope(
+              Map(("b", ExampleInt)),
               ExampleDeclareStatement(4, "b", ExampleInt),
-              ExampleAssignStatement(5, "b", ExampleScope(), ExampleIntegerBinaryOperation(
+              ExampleAssignStatement(5, "b", ExampleScope(Map.empty), ExampleIntegerBinaryOperation(
                 ExampleIntegerBinaryOperator.Sub,
                 ExampleIntegerBinaryOperation(
                   ExampleIntegerBinaryOperator.Add,
@@ -126,8 +188,9 @@ class TestExampleAstBuilder extends AnyFunSuite {
     val expected = Success(
       ExampleProgram(
         ExampleScope(
+          Map(("a", ExampleInt)),
           ExampleDeclareStatement(2, "a", ExampleInt),
-          ExampleAssignStatement(3, "a", ExampleScope(), ExampleIntegerBinaryOperation(
+          ExampleAssignStatement(3, "a", ExampleScope(Map.empty), ExampleIntegerBinaryOperation(
             ExampleIntegerBinaryOperator.Add,
             ExampleIntegerBinaryOperation(
               ExampleIntegerBinaryOperator.Mul,
@@ -166,14 +229,15 @@ class TestExampleAstBuilder extends AnyFunSuite {
     val expected = Success(
       ExampleProgram(
         ExampleScope(
+          Map(("a", ExampleInt), ("b", ExampleBool)),
           ExampleDeclareStatement(2, "a", ExampleInt),
           ExampleDeclareStatement(3, "b", ExampleBool),
-          ExampleAssignStatement(4, "a", ExampleScope(), ExampleIntegerBinaryOperation(
+          ExampleAssignStatement(4, "a", ExampleScope(Map.empty), ExampleIntegerBinaryOperation(
             ExampleIntegerBinaryOperator.Add,
             ExampleIntegerConstant(1),
             ExampleIntegerConstant(2)
           )),
-          ExampleAssignStatement(5, "b", ExampleScope(), ExampleBooleanUnaryOperation(
+          ExampleAssignStatement(5, "b", ExampleScope(Map.empty), ExampleBooleanUnaryOperation(
             ExampleBooleanUnaryOperator.Neg,
             ExampleIntegerEqualComparisonOperation(
               ExampleEqualComparisonOperator.Eq,
@@ -208,6 +272,7 @@ class TestExampleAstBuilder extends AnyFunSuite {
     val expected = Success(
       ExampleProgram(
         ExampleScope(
+          Map.empty,
           ExampleIfStatement(
             2,
             ExampleBooleanConstant(true),
@@ -249,6 +314,7 @@ class TestExampleAstBuilder extends AnyFunSuite {
     val expected = Success(
       ExampleProgram(
         ExampleScope(
+          Map.empty,
           ExampleWhileStatement(
             2,
             ExampleBooleanConstant(true),
@@ -400,54 +466,96 @@ class TestExampleAstBuilder extends AnyFunSuite {
 
     assert(ast.isFailure)
   }
-  
-  // testing arrays 
-  test("build simple example AST with array declaration and assignment") {
-  val code =
-    """
-    int array[3];
-    array[0] = 1;
-    array[1] = 2;
-    array[2] = 3;
-    """
 
-  val expected = Success(
-    ExampleProgram(
-      ExampleScope(
-        ExampleDeclareArrayStatement(2, "array", ExampleInt, 3),
-        ExampleAssignArrayStatement(3, "array", 0, ExampleIntegerConstant(1)),
-        ExampleAssignArrayStatement(4, "array", 1, ExampleIntegerConstant(2)),
-        ExampleAssignArrayStatement(5, "array", 2, ExampleIntegerConstant(3))
+  test("build example AST with array declaration and assignments") {
+    val code =
+      """
+      int array{3};
+      array{0} = 1;
+      array{1} = 2;
+      array{2} = 3;
+      """
+
+    val expected = Success(
+      ExampleProgram(
+        ExampleScope(
+          Map(
+            "array" -> ExampleArray(baseType = ExampleInt, size = Some(3))
+          ),
+          ExampleDeclareStatement(2, "array", ExampleArray(baseType = ExampleInt, size = Some(3))),
+          ExampleAssignStatement(
+            3,
+            "array",
+            ExampleScope(Map.empty),
+            ExampleArrayAssign("array", ExampleIntegerConstant(0), ExampleIntegerConstant(1))
+          ),
+          ExampleAssignStatement(
+            4,
+            "array",
+            ExampleScope(Map.empty),
+            ExampleArrayAssign("array", ExampleIntegerConstant(1), ExampleIntegerConstant(2))
+          ),
+          ExampleAssignStatement(
+            5,
+            "array",
+            ExampleScope(Map.empty),
+            ExampleArrayAssign("array", ExampleIntegerConstant(2), ExampleIntegerConstant(3))
+          )
+        )
       )
     )
-  )
 
-  val charStream = CharStreams.fromString(code)
+    val charStream = CharStreams.fromString(code)
 
-  val ast = for {
-    cst <- ExampleParser.parse(charStream)
-    ast <- ExampleAstBuilder.build(cst)
-  } yield ast
+    val ast = for {
+      cst <- ExampleParser.parse(charStream)
+      ast <- ExampleAstBuilder.build(cst)
+    } yield ast
 
-  assert(expected == ast)
-}
+    assert(expected == ast)
+  }
 
-test("fail to build a simple example AST because of an out-of-bounds array access") {
-  val code =
-    """
-    int array[3];
-    array[3] = 4; // This should trigger an error
-    """
+  test("build example AST with array access and print statement") {
+    val code =
+      """
+      int array{3};
+      int a;
+      a = 1;
+      array{0} = 1;
+      array{1} = 2;
+      array{2} = 3;
+      print(array{a});
+      """
 
-  val charStream = CharStreams.fromString(code)
+    val expected = Success(
+      ExampleProgram(
+        ExampleScope(
+          Map(
+            "array" -> ExampleArray(ExampleInt, Some(3)),
+            "a" -> ExampleInt
+          ),
+          ExampleDeclareStatement(2, "array", ExampleArray(ExampleInt, Some(3))),
+          ExampleDeclareStatement(3, "a", ExampleInt),
+          ExampleAssignStatement(4, "a", ExampleScope(Map.empty), ExampleIntegerConstant(1)),
+          ExampleAssignStatement(5, "array", ExampleScope(Map.empty), ExampleArrayAssign("array", ExampleIntegerConstant(0), ExampleIntegerConstant(1))),
+          ExampleAssignStatement(6, "array", ExampleScope(Map.empty), ExampleArrayAssign("array", ExampleIntegerConstant(1), ExampleIntegerConstant(2))),
+          ExampleAssignStatement(7, "array", ExampleScope(Map.empty), ExampleArrayAssign("array", ExampleIntegerConstant(2), ExampleIntegerConstant(3))),
+          ExamplePrintStatement(8, ExampleArrayAccess("array", ExampleIntegerVariable("a")))
+        )
+      )
+    )
 
-  val ast = for {
-    cst <- ExampleParser.parse(charStream)
-    ast <- ExampleAstBuilder.build(cst)
-  } yield ast
+    val charStream = CharStreams.fromString(code)
 
-  assert(ast.isFailure)
-}
+    val ast = for {
+      cst <- ExampleParser.parse(charStream)
+      ast <- ExampleAstBuilder.build(cst)
+    } yield ast
 
-  
+    assert(expected == ast)
+  }
+
+
+
+
 }

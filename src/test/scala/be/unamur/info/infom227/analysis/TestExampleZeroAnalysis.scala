@@ -1,4 +1,3 @@
-
 package be.unamur.info.infom227.analysis
 
 import be.unamur.info.infom227.ast.{ExampleAstBuilder, ExampleProgram}
@@ -18,7 +17,6 @@ class TestExampleZeroAnalysis extends AnyFunSuite {
     int x;
     int y;
     int z;
-    int tab[5];
     x = 5;
     y = 2;
     z = x / y;
@@ -58,6 +56,56 @@ class TestExampleZeroAnalysis extends AnyFunSuite {
     int x;
     int y;
     int z;
+    y = { // To have an abstract value of U
+      int unknown;
+      unknown
+    };
+    x = 3;
+    if (y > 5) {
+      y = x + y;
+    } else {
+      y = 0;
+    }
+    z = y;
+    """
+
+    val charStream = CharStreams.fromString(code)
+
+    val tryAst = for {
+      cst <- ExampleParser.parse(charStream)
+      ast <- ExampleAstBuilder.build(cst)
+    } yield ast
+
+    val (cfg, expected) = tryAst match
+      case Failure(exception) => fail(exception)
+      case Success(program) => (
+        ExampleCfgBuilder.build(program),
+        Success(
+          Map(
+            pp(program, 2) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.Bottom, "y" -> ExampleZeroAnalysisAbstractValue.Bottom, "z" -> ExampleZeroAnalysisAbstractValue.Bottom)),
+            pp(program, 3) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.Z, "y" -> ExampleZeroAnalysisAbstractValue.Bottom, "z" -> ExampleZeroAnalysisAbstractValue.Bottom)),
+            pp(program, 4) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.Z, "y" -> ExampleZeroAnalysisAbstractValue.Z, "z" -> ExampleZeroAnalysisAbstractValue.Bottom)),
+            pp(program, 5) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.Z, "y" -> ExampleZeroAnalysisAbstractValue.Z, "z" -> ExampleZeroAnalysisAbstractValue.Z)),
+            pp(program, 9) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.Z, "y" -> ExampleZeroAnalysisAbstractValue.U, "z" -> ExampleZeroAnalysisAbstractValue.Z)),
+            pp(program, 10) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.NZ, "y" -> ExampleZeroAnalysisAbstractValue.U, "z" -> ExampleZeroAnalysisAbstractValue.Z)),
+            pp(program, 11) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.NZ, "y" -> ExampleZeroAnalysisAbstractValue.NZ, "z" -> ExampleZeroAnalysisAbstractValue.Z)),
+            pp(program, 13) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.NZ, "y" -> ExampleZeroAnalysisAbstractValue.U, "z" -> ExampleZeroAnalysisAbstractValue.Z)),
+            pp(program, 15) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.NZ, "y" -> ExampleZeroAnalysisAbstractValue.U, "z" -> ExampleZeroAnalysisAbstractValue.Z)),
+          )
+        )
+      )
+
+    val result = ExampleZeroAnalysisWorklist.worklist(cfg)
+
+    assert(expected === result)
+  }
+
+  test("simple zero analysis with if and unreachable code") {
+    val code =
+      """
+    int x;
+    int y;
+    int z;
     x = 3;
     if (y > 5) {
       y = x + y;
@@ -85,9 +133,9 @@ class TestExampleZeroAnalysis extends AnyFunSuite {
             pp(program, 4) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.Z, "y" -> ExampleZeroAnalysisAbstractValue.Z, "z" -> ExampleZeroAnalysisAbstractValue.Bottom)),
             pp(program, 5) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.Z, "y" -> ExampleZeroAnalysisAbstractValue.Z, "z" -> ExampleZeroAnalysisAbstractValue.Z)),
             pp(program, 6) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.NZ, "y" -> ExampleZeroAnalysisAbstractValue.Z, "z" -> ExampleZeroAnalysisAbstractValue.Z)),
-            pp(program, 7) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.NZ, "y" -> ExampleZeroAnalysisAbstractValue.NZ, "z" -> ExampleZeroAnalysisAbstractValue.Z)),
-            pp(program, 9) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.NZ, "y" -> ExampleZeroAnalysisAbstractValue.U, "z" -> ExampleZeroAnalysisAbstractValue.Z)),
-            pp(program, 11) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.NZ, "y" -> ExampleZeroAnalysisAbstractValue.U, "z" -> ExampleZeroAnalysisAbstractValue.Z)),
+            pp(program, 7) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.Bottom, "y" -> ExampleZeroAnalysisAbstractValue.Bottom, "z" -> ExampleZeroAnalysisAbstractValue.Bottom)),
+            pp(program, 9) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.NZ, "y" -> ExampleZeroAnalysisAbstractValue.Z, "z" -> ExampleZeroAnalysisAbstractValue.Z)),
+            pp(program, 11) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("x" -> ExampleZeroAnalysisAbstractValue.NZ, "y" -> ExampleZeroAnalysisAbstractValue.Z, "z" -> ExampleZeroAnalysisAbstractValue.Z)),
           )
         )
       )
@@ -102,6 +150,10 @@ class TestExampleZeroAnalysis extends AnyFunSuite {
       """
     int i;
     int sum;
+    i = { // To have an abstract value of U
+      int unknown;
+      unknown
+    };
     while (i < 5) {
       sum = sum + i;
       i = i + 1;
@@ -124,10 +176,51 @@ class TestExampleZeroAnalysis extends AnyFunSuite {
           Map(
             pp(program, 2) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.Bottom, "sum" -> ExampleZeroAnalysisAbstractValue.Bottom)),
             pp(program, 3) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.Z, "sum" -> ExampleZeroAnalysisAbstractValue.Bottom)),
-            pp(program, 4) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.U, "sum" -> ExampleZeroAnalysisAbstractValue.U)),
-            pp(program, 5) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.U, "sum" -> ExampleZeroAnalysisAbstractValue.U)),
-            pp(program, 6) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.U, "sum" -> ExampleZeroAnalysisAbstractValue.U)),
-            pp(program, 8) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.NZ, "sum" -> ExampleZeroAnalysisAbstractValue.U)),
+            pp(program, 4) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.Z, "sum" -> ExampleZeroAnalysisAbstractValue.Z)),
+            pp(program, 8) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.U, "sum" -> ExampleZeroAnalysisAbstractValue.U)),
+            pp(program, 9) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.U, "sum" -> ExampleZeroAnalysisAbstractValue.U)),
+            pp(program, 10) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.U, "sum" -> ExampleZeroAnalysisAbstractValue.U)),
+            pp(program, 12) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.NZ, "sum" -> ExampleZeroAnalysisAbstractValue.U)),
+          )
+        )
+      )
+
+    val result = ExampleZeroAnalysisWorklist.worklist(cfg)
+
+    assert(expected === result)
+  }
+
+  test("simple zero analysis with while and unreachable code") {
+    val code =
+      """
+    int i;
+    int sum;
+    while (False) {
+      sum = sum + i;
+      i = i + 1;
+    }
+    print sum;
+    """
+
+    val charStream = CharStreams.fromString(code)
+
+    val tryAst = for {
+      cst <- ExampleParser.parse(charStream)
+      ast <- ExampleAstBuilder.build(cst)
+    } yield ast
+
+    val (cfg, expected) = tryAst match
+      case Failure(exception) => fail(exception)
+      case Success(program) => (
+        ExampleCfgBuilder.build(program),
+        Success(
+          Map(
+            pp(program, 2) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.Bottom, "sum" -> ExampleZeroAnalysisAbstractValue.Bottom)),
+            pp(program, 3) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.Z, "sum" -> ExampleZeroAnalysisAbstractValue.Bottom)),
+            pp(program, 4) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.Z, "sum" -> ExampleZeroAnalysisAbstractValue.Z)),
+            pp(program, 5) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.Bottom, "sum" -> ExampleZeroAnalysisAbstractValue.Bottom)),
+            pp(program, 6) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.Bottom, "sum" -> ExampleZeroAnalysisAbstractValue.Bottom)),
+            pp(program, 8) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("i" -> ExampleZeroAnalysisAbstractValue.Z, "sum" -> ExampleZeroAnalysisAbstractValue.Z)),
           )
         )
       )
@@ -222,43 +315,4 @@ class TestExampleZeroAnalysis extends AnyFunSuite {
 
     assert(expected === tryMessages)
   }
-//   testing arrays
-  test("simple array declaration and assignment") {
-  val code =
-    """
-    int array[3];
-    array[0] = 1;
-    array[1] = 2;
-    array[2] = 3;
-    array[3] = 4; // This should trigger an error
-    """
-
-  val charStream = CharStreams.fromString(code)
-
-  val tryAst = for {
-    cst <- ExampleParser.parse(charStream)
-    ast <- ExampleAstBuilder.build(cst)
-  } yield ast
-
-  val (cfg, expected) = tryAst match {
-    case Failure(exception) => fail(exception)
-    case Success(program) => (
-      ExampleCfgBuilder.build(program),
-      Success(
-        Map(
-          pp(program, 2) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("array" -> ExampleZeroAnalysisAbstractValue.Bottom)),
-          pp(program, 3) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("array" -> ExampleZeroAnalysisAbstractValue.U)),
-          pp(program, 4) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("array" -> ExampleZeroAnalysisAbstractValue.U)),
-          pp(program, 5) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("array" -> ExampleZeroAnalysisAbstractValue.U)),
-          pp(program, 6) -> ExampleAbstractEnvironment(ExampleZeroAnalysisAbstractValue.lattice, None, Map("array" -> ExampleZeroAnalysisAbstractValue.U)),
-        )
-      )
-    )
-  }
-
-  val result = ExampleZeroAnalysisWorklist.worklist(cfg)
-
-  assert(expected === result)
-}
-
 }

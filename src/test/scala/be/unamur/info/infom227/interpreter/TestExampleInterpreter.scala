@@ -200,4 +200,37 @@ class TestExampleInterpreter extends AnyFunSuite {
     assert(Success(()) == result)
     assert(expected == stringWriter.toString)
   }
+
+  test("build example AST with array access and print statement") {
+    val code =
+      """
+      int array{3};
+      int a;
+      int b;
+      a = 1;
+      array{0} = 1;
+      array{1} = 2;
+      array{2} = 3;
+      b = array{a};
+      print(b);
+      """
+
+    val expected = "2\n"
+
+    val charStream = CharStreams.fromString(code)
+
+    val stringWriter = new StringWriter()
+
+    val environment = ExampleEnvironment[Int | Boolean](BufferedWriter(stringWriter))
+
+    val result = for {
+      cst <- ExampleParser.parse(charStream)
+      ast <- ExampleAstBuilder.build(cst)
+      _ <- ExampleInterpreter.run(ast, environment)
+    } yield ()
+
+    assert(Success(()) == result)
+    assert(expected == stringWriter.toString)
+  }
+
 }

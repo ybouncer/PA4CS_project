@@ -7,7 +7,7 @@ import be.unamur.info.infom227.cst.ExampleParser
 import be.unamur.info.infom227.interpreter.ExampleInterpreter
 import org.antlr.v4.runtime.CharStreams
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{Try, Success, Failure}
 
 
 @main def main(action: String, file: String): Unit = {

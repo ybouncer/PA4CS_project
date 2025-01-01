@@ -1,4 +1,4 @@
-// Generated from c:/Users/yboun/Desktop/Cyber Security/PA4CS_project/src/main/antlr/be/unamur/info/infom227/cst/ExampleGrammar.g4 by ANTLR 4.13.1
+// Generated from /Users/ryad/Documents/GitHub/INFOM227_ExampleAnalyser/src/main/antlr/be/unamur/info/infom227/cst/ExampleGrammar.g4 by ANTLR 4.13.1
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
