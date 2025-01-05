@@ -1,0 +1,10 @@
+int x;
+int array{2};
+x = 1;
+array{x} = 3;
+x = -1;
+x = array{x};
+x = 2;
+x = array{x};
+x = -10;
+x = array{x};
